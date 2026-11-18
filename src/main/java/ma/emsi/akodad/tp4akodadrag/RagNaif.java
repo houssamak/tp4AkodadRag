@@ -23,6 +23,7 @@ import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
 import ma.emsi.akodad.tp4akodadrag.assistant.Assistant;
 
 import java.util.List;
+import java.util.Scanner;
 
 /**
  * Test 1 : RAG naïf, avec toutes les étapes du RAG écrites explicitement
@@ -82,10 +83,45 @@ public class RagNaif {
                 .contentRetriever(contentRetriever)
                 .build();
 
-        // 4. Question posée à l'assistant sur le contenu du PDF
-        String question = "Quelle est la signification de 'RAG' ; à quoi ça sert ?";
-        String reponse = assistant.chat(question);
-        System.out.println("Question : " + question);
-        System.out.println("Réponse : " + reponse);
+        // ===== Version 1 (étape 3.a) : une seule question =====
+        // String question = "Quelle est la signification de 'RAG' ; à quoi ça sert ?";
+        // String reponse = assistant.chat(question);
+        // System.out.println("Question : " + question);
+        // System.out.println("Réponse : " + reponse);
+
+        // 4. Conversation : plusieurs questions sans recompiler
+        conversationAvec(assistant);
+    }
+
+    /**
+     * Permet de poser plusieurs questions à l'assistant, saisies au clavier,
+     * sans avoir à recompiler. La conversation s'arrête quand on tape "fin".
+     * Si l'API du LLM renvoie une erreur (par exemple 503 si le modèle est
+     * surchargé), l'erreur est affichée et la conversation continue.
+     *
+     * @param assistant l'assistant à qui poser les questions
+     */
+    private static void conversationAvec(Assistant assistant) {
+        try (Scanner scanner = new Scanner(System.in)) {
+            while (true) {
+                System.out.println("==================================================");
+                System.out.println("Posez votre question (ou \"fin\" pour arrêter) : ");
+                String question = scanner.nextLine();
+                if (question.isBlank()) {
+                    continue;
+                }
+                if ("fin".equalsIgnoreCase(question.trim())) {
+                    break;
+                }
+                System.out.println("==================================================");
+                try {
+                    String reponse = assistant.chat(question);
+                    System.out.println("Assistant : " + reponse);
+                } catch (RuntimeException e) {
+                    System.out.println("Erreur de l'API du LLM : " + e.getMessage());
+                    System.out.println("Vous pouvez reposer la question un peu plus tard.");
+                }
+            }
+        }
     }
 }
