@@ -24,21 +24,30 @@ import ma.emsi.akodad.tp4akodadrag.assistant.Assistant;
 
 import java.util.List;
 import java.util.Scanner;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Test 1 : RAG naïf, avec toutes les étapes du RAG écrites explicitement
  * (contrairement au RAG "facile" où elles sont cachées).
  * Le document utilisé est le support de cours sur le Fine Tuning et le RAG.
+ * Le logging permet de voir les requêtes envoyées au LLM et ses réponses.
  */
 public class RagNaif {
 
     public static void main(String[] args) {
+
+        // ===== Configuration du logging (au début du code) =====
+        configureLogger();
 
         // ===== Création du ChatModel (Gemini), comme dans les TP précédents =====
         String apiKey = System.getenv("GEMINI_KEY");
         ChatModel model = GoogleGenAiChatModel.builder()
                 .apiKey(apiKey)
                 .modelName("gemini-3.8-flash")
+                // Affiche dans les logs les requêtes envoyées au LLM et ses réponses
+                .logRequestsAndResponses(true)
                 .build();
 
         // ================= Phase 1 du RAG : enregistrement des embeddings =================
@@ -123,5 +132,19 @@ public class RagNaif {
                 }
             }
         }
+    }
+
+    /**
+     * Configure le logging de LangChain4j (java.util.logging) pour afficher
+     * dans la console le détail des requêtes envoyées au LLM et de ses réponses.
+     */
+    private static void configureLogger() {
+        // Configure le logger sous-jacent (java.util.logging)
+        Logger packageLogger = Logger.getLogger("dev.langchain4j");
+        packageLogger.setLevel(Level.FINE); // Ajuster niveau
+        // Ajouter un handler pour la console pour faire afficher les logs
+        ConsoleHandler handler = new ConsoleHandler();
+        handler.setLevel(Level.FINE);
+        packageLogger.addHandler(handler);
     }
 }
