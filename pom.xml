@@ -57,5 +57,10 @@
             <artifactId>slf4j-jdk14</artifactId>
             <version>2.0.17</version>
         </dependency>
+        <!-- Moteur de recherche Web Tavily (TavilyWebSearchEngine), version donnée par le BOM -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-web-search-engine-tavily</artifactId>
+        </dependency>
     </dependencies>
 </project>
