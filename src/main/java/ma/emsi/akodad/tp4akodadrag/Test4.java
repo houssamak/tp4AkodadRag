@@ -18,7 +18,7 @@ import dev.langchain4j.rag.RetrievalAugmentor;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.rag.content.retriever.WebSearchContentRetriever;
-import dev.langchain4j.rag.query.router.DefaultQueryRouter;
+import dev.langchain4j.rag.query.router.LanguageModelQueryRouter;
 import dev.langchain4j.rag.query.router.QueryRouter;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.store.embedding.EmbeddingStore;
@@ -27,7 +27,9 @@ import dev.langchain4j.web.search.WebSearchEngine;
 import dev.langchain4j.web.search.tavily.TavilyWebSearchEngine;
 import ma.emsi.akodad.tp4akodadrag.assistant.Assistant;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
@@ -35,8 +37,11 @@ import java.util.logging.Logger;
 
 /**
  * Test 5 : RAG avec récupération sur le Web.
- * Les informations pour le RAG sont récupérées dans le fichier PDF
- * (support de cours sur le RAG) ET sur le Web avec le moteur de recherche Tavily.
+ * Les informations pour le RAG peuvent être récupérées dans le fichier PDF
+ * (support de cours sur le RAG) et sur le Web avec le moteur de recherche Tavily.
+ * Exercice bonus : un LanguageModelQueryRouter choisit la ou les sources
+ * à utiliser, pour que le PDF ne soit pas utilisé quand la question n'a
+ * rien à voir avec son contenu (par exemple un événement récent).
  */
 public class Test4 {
 
@@ -83,8 +88,24 @@ public class Test4 {
                 .webSearchEngine(webSearchEngine)
                 .build();
 
-        // 4. QueryRouter qui utilise les 2 ContentRetrievers (PDF et Web)
-        QueryRouter queryRouter = new DefaultQueryRouter(contentRetrieverPdf, contentRetrieverWeb);
+        // 4. QueryRouter
+
+        // ===== Version 1 (avant l'exercice bonus) : DefaultQueryRouter =====
+        // Les 2 ContentRetrievers sont TOUJOURS utilisés : des extraits du PDF
+        // sont ajoutés même pour une question qui n'a rien à voir avec le PDF.
+        // QueryRouter queryRouter = new DefaultQueryRouter(contentRetrieverPdf, contentRetrieverWeb);
+
+        // ===== Version 2 (exercice bonus) : LanguageModelQueryRouter =====
+        // Le LM choisit la ou les sources à utiliser d'après leur description :
+        // pour une question sur un événement récent, il ne choisit que le Web.
+        Map<ContentRetriever, String> descriptions = new HashMap<>();
+        descriptions.put(contentRetrieverPdf,
+                "Support de cours sur l'intelligence artificielle : fine-tuning, RAG "
+                        + "(Retrieval-Augmented Generation), embeddings et modèles de langage (LLM)");
+        descriptions.put(contentRetrieverWeb,
+                "Recherche sur le Web : actualités, événements récents et informations "
+                        + "générales qui ne se trouvent pas dans le support de cours");
+        QueryRouter queryRouter = new LanguageModelQueryRouter(model, descriptions);
 
         // 5. RetrievalAugmentor avec ce QueryRouter
         RetrievalAugmentor retrievalAugmentor = DefaultRetrievalAugmentor.builder()
